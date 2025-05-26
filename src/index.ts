@@ -11,13 +11,13 @@ const server = new McpServer({
 });
 
 server.tool(
-  "list_hn_latest_stories",
-  "List latest N stories on Hacker News",
+  "summarize_hn_latest_stories",
+  "Summarize latest N stories on Hacker News",
   {
     parameters: {
       n: {
         type: "number",
-        description: "Number of stories to list",
+        description: "Number of stories to summarize",
         minimum: 1,
         maximum: 100
       }
@@ -40,15 +40,28 @@ server.tool(
       content: [
         {
           type: "text",
-          text: `Here are the latest ${n} stories from Hacker News:`
+          text: `Here are the latest ${n} stories from Hacker News and their URLs:`
         },
         ...storiesData.map((story: any) => ({
-          type: "text",
-          text: story.title,
+          type: "resource",
+          resource: {
+            type: "url",
+            uri: story.url || "",
+            text: story.title || ""
+          }
         }))
-      ] as Array<{
+      ]
+    } as {
+      content: Array<{
         type: "text";
         text: string;
+      } | {
+        type: "resource";
+        resource: {
+          type: "url";
+          uri: string;
+          text: string;
+        };
       }>
     };
   }
@@ -69,7 +82,7 @@ async function main() {
   try {
     transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error("MCP Server running on stdio");
+    console.log("MCP Server running on stdio");
   } catch (error) {
     console.error("Error starting server:", error);
     process.exit(1);
